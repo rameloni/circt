@@ -78,6 +78,20 @@ void registerHGLDDTranslation() {
         return emitSplitHGLDD(op, getOptions());
       },
       registerDialects);
+
+  static TranslateFromMLIRRegistration reg3(
+      "emit-tywaves-hgldd", "emit tywaves HGLDD debug information",
+      [=](ModuleOp op, raw_ostream &output) {
+        return emitTywavesHGLDD(op, output, getOptions());
+      },
+      registerDialects);
+
+  static TranslateFromMLIRRegistration reg4(
+      "emit-split-tywaves-hgldd", "emit tywaves HGLDD debug information",
+      [=](ModuleOp op, raw_ostream &output) {
+        return emitSplitTywavesHGLDD(op, getOptions());
+      },
+      registerDialects);
 }
 
 void registerTranslations() {

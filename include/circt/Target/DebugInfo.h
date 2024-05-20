@@ -56,6 +56,11 @@ LogicalResult emitHGLDD(Operation *module, llvm::raw_ostream &os,
 LogicalResult emitSplitHGLDD(Operation *module,
                              const EmitHGLDDOptions &options = {});
 
+LogicalResult emitTywavesHGLDD(Operation *module, llvm::raw_ostream &os,
+                               const EmitHGLDDOptions &options = {});
+LogicalResult emitSplitTywavesHGLDD(Operation *module,
+                                    const EmitHGLDDOptions &options = {});
+
 } // namespace debug
 } // namespace circt
 

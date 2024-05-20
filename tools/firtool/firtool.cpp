@@ -219,6 +219,10 @@ static cl::opt<std::string>
 static cl::opt<bool> emitHGLDD("emit-hgldd", cl::desc("Emit HGLDD debug info"),
                                cl::init(false), cl::cat(mainCategory));
 
+static cl::opt<bool> emitTywavesHGLDD("emit-tywaves-hgldd",
+                                      cl::desc("Emit Tywaves debug info"),
+                                      cl::init(false), cl::cat(mainCategory));
+
 static cl::opt<std::string>
     hglddSourcePrefix("hgldd-source-prefix",
                       cl::desc("Prefix for source file paths in HGLDD output"),
@@ -305,6 +309,29 @@ struct EmitSplitHGLDDPass
   void runOnOperation() override {
     markAllAnalysesPreserved();
     if (failed(debug::emitSplitHGLDD(getOperation(), getHGLDDOptions())))
+      return signalPassFailure();
+  }
+};
+
+/// Wrapper pass to call the `emitTywavesHGLDD` translation.
+struct EmitTywavesHGLDDPass
+    : public PassWrapper<EmitTywavesHGLDDPass, OperationPass<mlir::ModuleOp>> {
+  llvm::raw_ostream &os;
+  EmitTywavesHGLDDPass(llvm::raw_ostream &os) : os(os) {}
+  void runOnOperation() override {
+    markAllAnalysesPreserved();
+    if (failed(debug::emitTywavesHGLDD(getOperation(), os, getHGLDDOptions())))
+      return signalPassFailure();
+  }
+};
+
+/// Wrapper pass to call the `emitSplitHGLDD` translation.
+struct EmitSplitTywavesHGLDDPass
+    : public PassWrapper<EmitSplitTywavesHGLDDPass,
+                         OperationPass<mlir::ModuleOp>> {
+  void runOnOperation() override {
+    markAllAnalysesPreserved();
+    if (failed(debug::emitSplitTywavesHGLDD(getOperation(), getHGLDDOptions())))
       return signalPassFailure();
   }
 };
@@ -434,6 +461,8 @@ static LogicalResult processBuffer(
   // tracking.
   if (emitHGLDD)
     loweringOptions.emitVerilogLocations = true;
+  if (emitTywavesHGLDD)
+    loweringOptions.emitVerilogLocations = true;
 
   // Load the emitter options from the command line. Command line options if
   // specified will override any module options.
@@ -454,6 +483,8 @@ static LogicalResult processBuffer(
         return failure();
       if (emitHGLDD)
         pm.addPass(std::make_unique<EmitHGLDDPass>((*outputFile)->os()));
+      else if (emitTywavesHGLDD)
+        pm.addPass(std::make_unique<EmitTywavesHGLDDPass>((*outputFile)->os()));
       break;
     case OutputSplitVerilog:
       if (failed(firtool::populateExportSplitVerilog(
@@ -461,6 +492,8 @@ static LogicalResult processBuffer(
         return failure();
       if (emitHGLDD)
         pm.addPass(std::make_unique<EmitSplitHGLDDPass>());
+      else if (emitTywavesHGLDD)
+        pm.addPass(std::make_unique<EmitSplitTywavesHGLDDPass>());
       break;
     case OutputIRVerilog:
       // Run the ExportVerilog pass to get its lowering, but discard the output.
